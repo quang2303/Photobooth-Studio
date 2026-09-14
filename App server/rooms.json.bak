@@ -1,0 +1,36 @@
+{
+  "test": {
+    "name": "test",
+    "overlayUrl": "/uploads/overlays/merged-test-1782460755746.png",
+    "layers": [
+      {
+        "id": "layer-1782449858068-84",
+        "type": "image",
+        "url": "/uploads/layers/layer-1782449858032-279341042.png",
+        "name": "LOGO LBM + CANON-01.png",
+        "x": 0.7,
+        "y": -4.7,
+        "scale": 17.2
+      },
+      {
+        "id": "layer-1782460742062-792",
+        "type": "video",
+        "url": "/uploads/layers/layer-1782460742038-750049547.webm",
+        "name": "123.webm",
+        "x": 0,
+        "y": 0,
+        "scale": 100
+      }
+    ],
+    "aspectRatio": "9:16",
+    "autoCaptureInterval": 10,
+    "deviceId": "webcam-CD_QUANG",
+    "photos": [
+      "/uploads/photos/test/composite_1782448721007.jpg",
+      "/uploads/photos/test/composite_1782460809054.jpg",
+      "/uploads/photos/test/composite_1782465666986.jpg",
+      "/uploads/photos/test/browser_webcam_1782467470304.jpg",
+      "/uploads/photos/test/composite_1782467536943.jpg"
+    ]
+  }
+}

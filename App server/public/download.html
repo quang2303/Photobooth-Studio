@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photo Booth - Album Ảnh & Tải Về</title>
+  <!-- Tailwind CSS & Google Fonts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at top, #1e1b4b 0%, #0f172a 60%, #020617 100%);
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-100 flex flex-col justify-between p-6">
+
+  <!-- Header -->
+  <header class="w-full max-w-6xl mx-auto flex justify-between items-center py-4 border-b border-slate-800/80 mb-8">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-rose-500 to-rose-700 flex items-center justify-center shadow-lg shadow-rose-500/20">
+        <svg class="w-4 h-4 fill-white" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+        </svg>
+      </div>
+      <div>
+        <span class="text-xs font-semibold text-slate-500 uppercase tracking-widest">Album Ảnh Sự Kiện</span>
+        <h1 id="room-title-ui" class="text-xl font-bold tracking-wide text-slate-100">...</h1>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <a id="liveview-btn" class="text-xs font-semibold text-rose-450 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 px-4 py-2 rounded-lg transition-all">
+        Trở Về Liveview
+      </a>
+      <a href="/index.html" class="text-xs text-slate-400 hover:text-slate-200">Trang chủ</a>
+    </div>
+  </header>
+
+  <!-- Gallery Main Container -->
+  <main class="w-full max-w-6xl mx-auto flex-1 flex flex-col justify-start">
+    
+    <!-- Loading and empty states -->
+    <div id="loading" class="text-slate-500 text-sm text-center py-20">
+      Đang tải hình ảnh...
+    </div>
+
+    <div id="empty-state" class="text-center py-20 space-y-4 hidden">
+      <div class="w-16 h-16 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto text-slate-600">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"></path>
+        </svg>
+      </div>
+      <h3 class="font-bold text-slate-300">Chưa Có Hình Ảnh Nào</h3>
+      <p class="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">Hãy quay lại trang Liveview và bấm nút chụp ảnh để tạo những bức ảnh kỷ niệm đầu tiên!</p>
+    </div>
+
+    <!-- Gallery Grid -->
+    <div id="gallery-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 hidden">
+      <!-- Generated photo elements -->
+    </div>
+
+  </main>
+
+  <!-- Lightbox Fullscreen Modal -->
+  <div id="lightbox" class="fixed inset-0 bg-black/95 backdrop-blur-md z-50 flex flex-col justify-between items-center p-6 hidden">
+    <div class="w-full max-w-6xl flex justify-between items-center text-slate-300">
+      <span class="text-xs font-semibold uppercase tracking-widest" id="lightbox-filename">photo.jpg</span>
+      <button id="close-lightbox" class="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-100 hover:border-slate-700 transition duration-200">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Full resolution Media Container -->
+    <div class="max-w-4xl max-h-[75vh] flex justify-center items-center overflow-hidden w-full h-full relative" id="lightbox-media-container">
+      <img id="lightbox-img" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl" src="" alt="Lightbox">
+      <video id="lightbox-video" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl hidden" controls autoplay playsinline loop></video>
+    </div>
+
+    <!-- Download link bottom -->
+    <div class="w-full flex justify-center pb-4">
+      <a id="lightbox-download-link" download class="px-8 py-3.5 bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white font-bold rounded-xl transition duration-200 shadow-lg shadow-rose-500/25 flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+        </svg>
+        <span id="lightbox-download-text">Tải Ảnh Chất Lượng Cao</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="w-full text-center text-xs text-slate-500 py-6 border-t border-slate-900 max-w-6xl mx-auto mt-12">
+    &copy; 2026 PhotoBooth Sync System. Album Ảnh Công Cộng.
+  </footer>
+
+  <!-- Socket.io Script & Gallery Frontend Logic -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // Extract room name from path (which is /room/:roomName/download)
+    const urlParts = window.location.pathname.split('/').filter(Boolean);
+    const roomIndex = urlParts.indexOf('room');
+    const roomName = roomIndex !== -1 && urlParts[roomIndex + 1] ? urlParts[roomIndex + 1] : null;
+    
+    if (!roomName) {
+      alert('Đường dẫn không hợp lệ. Vui lòng chọn phòng từ trang chủ!');
+      window.location.href = '/index.html';
+    } else {
+      document.getElementById('room-title-ui').textContent = roomName.toUpperCase();
+      document.getElementById('liveview-btn').href = `/room/${roomName}`;
+    }
+
+    // Selectors
+    const loadingDiv = document.getElementById('loading');
+    const emptyDiv = document.getElementById('empty-state');
+    const gridDiv = document.getElementById('gallery-grid');
+    
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+    const lightboxFilename = document.getElementById('lightbox-filename');
+    const lightboxDl = document.getElementById('lightbox-download-link');
+    const closeLightboxBtn = document.getElementById('close-lightbox');
+
+    // Load photos on startup
+    async function loadGallery() {
+      loadingDiv.classList.remove('hidden');
+      gridDiv.classList.add('hidden');
+      emptyDiv.classList.add('hidden');
+
+      try {
+        const response = await fetch(`/api/rooms-data/${roomName}`);
+        if (!response.ok) throw new Error('Not found');
+        const room = await response.json();
+        
+        loadingDiv.classList.add('hidden');
+
+        if (!room.photos || room.photos.length === 0) {
+          emptyDiv.classList.remove('hidden');
+          return;
+        }
+
+        gridDiv.innerHTML = '';
+        // Display in reverse chronological order (newest first)
+        const reversedPhotos = [...room.photos].reverse();
+        
+        reversedPhotos.forEach(photoUrl => {
+          addPhotoToGrid(photoUrl, false);
+        });
+
+        gridDiv.classList.remove('hidden');
+
+      } catch (err) {
+        loadingDiv.textContent = 'Lỗi kết nối. Không thể lấy dữ liệu ảnh!';
+      }
+    }
+
+    // Helper to add card to gallery
+    function addPhotoToGrid(photoUrl, prepend = false) {
+      const fileName = photoUrl.split('/').pop();
+      const isVideo = photoUrl.endsWith('.mp4') || photoUrl.endsWith('.webm');
+      const card = document.createElement('div');
+      card.className = 'group bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden shadow-xl aspect-3-2 relative cursor-pointer hover:border-rose-500/20 transition-all duration-300';
+      
+      let mediaHtml = '';
+      if (isVideo) {
+        mediaHtml = `
+          <video class="w-full h-full object-cover group-hover:scale-105 transition duration-500" src="${photoUrl}" autoplay loop muted playsinline></video>
+          <div class="absolute top-3 right-3 bg-red-600/90 text-white text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full tracking-wider shadow z-20 flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span> Video
+          </div>
+        `;
+      } else {
+        mediaHtml = `<img class="w-full h-full object-cover group-hover:scale-105 transition duration-500" src="${photoUrl}" alt="${fileName}">`;
+      }
+
+      const isCustomPhoto = photoUrl.includes('/photo/raw/');
+      const downloadHref = isCustomPhoto ? photoUrl.replace('/photo/raw/', '/photo/download/') : photoUrl;
+
+      card.innerHTML = `
+        ${mediaHtml}
+        <div class="absolute inset-0 bg-slate-950/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4 z-10">
+          <div class="text-[10px] text-slate-400 font-medium truncate">${fileName}</div>
+          <div class="flex gap-2">
+            <button onclick="openLightbox('${photoUrl}', '${fileName}', event)" class="flex-1 py-2.5 bg-slate-900 border border-slate-800 hover:border-slate-700 hover:text-white rounded-xl text-xs font-semibold transition">
+              Xem lớn
+            </button>
+            <a href="${downloadHref}" download class="flex-1 py-2.5 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+              </svg>
+              Tải file
+            </a>
+          </div>
+        </div>
+      `;
+
+      card.addEventListener('click', (e) => {
+        // Prevent trigger when clicking action buttons inside the overlay
+        if (e.target.closest('button') || e.target.closest('a')) return;
+        openLightbox(photoUrl, fileName);
+      });
+
+      if (prepend) {
+        gridDiv.insertBefore(card, gridDiv.firstChild);
+      } else {
+        gridDiv.appendChild(card);
+      }
+    }
+
+    // Lightbox Control
+    const lightboxVideo = document.getElementById('lightbox-video');
+    const lightboxDlText = document.getElementById('lightbox-download-text');
+
+    function openLightbox(url, name, event) {
+      if (event) event.stopPropagation();
+      const isVideo = url.endsWith('.mp4') || url.endsWith('.webm');
+      
+      const isCustomPhoto = url.includes('/photo/raw/');
+      const downloadHref = isCustomPhoto ? url.replace('/photo/raw/', '/photo/download/') : url;
+
+      lightboxFilename.textContent = name;
+      lightboxDl.href = downloadHref;
+      
+      if (isVideo) {
+        lightboxImg.classList.add('hidden');
+        lightboxImg.src = '';
+        
+        lightboxVideo.src = url;
+        lightboxVideo.classList.remove('hidden');
+        lightboxDlText.textContent = 'Tải Video Chất Lượng Cao';
+      } else {
+        lightboxVideo.classList.add('hidden');
+        lightboxVideo.src = '';
+        
+        lightboxImg.src = url;
+        lightboxImg.classList.remove('hidden');
+        lightboxDlText.textContent = 'Tải Ảnh Chất Lượng Cao';
+      }
+      
+      lightbox.classList.remove('hidden');
+    }
+
+    function closeLightbox() {
+      lightbox.classList.add('hidden');
+      lightboxImg.src = '';
+      lightboxVideo.src = '';
+      lightboxVideo.classList.add('hidden');
+    }
+
+    closeLightboxBtn.addEventListener('click', closeLightbox);
+
+    // Close lightbox on clicking outside background
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox) {
+        closeLightbox();
+      }
+    });
+
+    // Socket.io Real-time Gallery Syncing
+    const socket = io();
+    socket.on('connect', () => {
+      socket.emit('join-room', roomName);
+    });
+
+    socket.on('new-photo', (photo) => {
+      // Hide empty state if active
+      emptyDiv.classList.add('hidden');
+      gridDiv.classList.remove('hidden');
+      
+      // Add the photo immediately to the top of the grid
+      addPhotoToGrid(photo.url, true);
+    });
+
+    // Initial Load
+    loadGallery();
+  </script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+{
+  "name": "camera-sync-agent",
+  "version": "1.0.0",
+  "description": "Desktop Client Agent application for syncing professional cameras via USB gphoto2 to cloud",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "dist-fast": "electron-packager . CameraSyncAgent --platform=win32 --arch=x64 --out=dist --overwrite --asar.unpackDir={sharp,@img,bridges}"
+  },
+  "dependencies": {
+    "@alpha-sdk/api": "^1.0.9",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "googleapis": "^122.0.0",
+    "qrcode": "^1.5.4",
+    "sharp": "^0.33.4",
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.7.5"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3",
+    "electron-packager": "^17.1.2"
+  },
+  "build": {
+    "appId": "com.photobooth.camera-sync-agent",
+    "productName": "CameraSyncAgent",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "asar": true,
+    "asarUnpack": [
+      "bridges/**/*",
+      "**/node_modules/sharp/**/*",
+      "**/node_modules/@img/**/*"
+    ],
+    "files": [
+      "**/*",
+      "!dist/*",
+      "!tmp/*"
+    ]
+  }
+}

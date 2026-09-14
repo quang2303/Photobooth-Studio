@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photo Booth - Admin Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at top, #1e1b4b 0%, #0f172a 60%, #020617 100%);
+    }
+    input[type="range"] { height: 4px; }
+    input[type="range"]::-webkit-slider-thumb { width: 12px; height: 12px; }
+    
+    /* Interactive Layer Editor Styles */
+    #modal-active-layer-wrapper {
+      outline: 2px dashed #f43f5e;
+      outline-offset: -1px;
+    }
+    #modal-active-layer-wrapper::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-100 p-6 md:p-10">
+
+  <header class="max-w-6xl mx-auto mb-10 flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-rose-500 to-rose-700 flex items-center justify-center shadow-lg shadow-rose-500/20">
+        <svg class="w-6 h-6 fill-white" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold tracking-wide">Photo Booth Admin</h1>
+        <p class="text-xs text-slate-400 tracking-wider">Bảng Điều Khiển Quản Trị Phòng Chụp</p>
+      </div>
+    </div>
+    <a href="/" class="text-xs font-semibold text-slate-400 hover:text-white transition bg-slate-800/50 border border-slate-700/50 px-4 py-2 rounded-xl">Trang Chủ</a>
+  </header>
+
+  <main class="max-w-6xl mx-auto relative">
+    
+    <!-- 1. Search Panel (Visible by default) -->
+    <div id="search-panel" class="max-w-md mx-auto bg-slate-900/50 border border-slate-850 rounded-3xl p-8 backdrop-blur-xl shadow-2xl transition-all duration-300 transform scale-100 opacity-100 mt-10">
+      <div class="text-center mb-6">
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-violet-500 to-indigo-600 flex items-center justify-center mx-auto shadow-lg shadow-indigo-500/20 mb-4 animate-bounce">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </div>
+        <h2 class="text-xl font-extrabold text-slate-100">Quản Lý Phòng Chụp</h2>
+        <p class="text-xs text-slate-400 mt-2">Nhập tên phòng để bắt đầu quản lý hoặc khởi tạo phòng mới</p>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Tên Phòng Chụp</label>
+          <input type="text" id="admin-room-search" placeholder="Ví dụ: wedding-party, event-2026..." required
+            class="w-full bg-slate-950/80 border border-slate-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 rounded-xl px-4 py-3.5 text-sm text-slate-200 outline-none transition duration-200 placeholder-slate-600 font-medium">
+        </div>
+        <button id="search-btn" class="w-full py-3.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-750 hover:to-indigo-750 text-white font-semibold rounded-xl transition duration-200 shadow-lg shadow-indigo-500/25 flex justify-center items-center gap-2">
+          Tiến Vào Quản Lý
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- 2. Editor Panel (Hidden by default) -->
+    <div id="editor-panel" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-8 transition-all duration-300 opacity-0 transform translate-y-4">
+      
+      <!-- Left Column: Settings Form -->
+      <section class="lg:col-span-1">
+        <div class="bg-slate-900/50 border border-slate-850 rounded-2xl p-6 backdrop-blur-xl shadow-xl sticky top-6">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-6">
+            <h2 class="text-lg font-bold text-slate-200 flex items-center gap-2">
+              <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.43l-1.003.828c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.43l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.991l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.28z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              Cấu Hình Phòng
+            </h2>
+            <span id="room-status-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider bg-rose-500/10 text-rose-450 border border-rose-500/20">Offline</span>
+          </div>
+
+          <!-- Alert for new room -->
+          <div id="new-room-alert" class="hidden mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl text-xs flex items-center gap-2">
+            <svg class="w-4.5 h-4.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <span>Phòng mới chưa tồn tại. Sẽ tự động tạo khi lưu!</span>
+          </div>
+
+          <form id="room-form" class="space-y-4">
+            <!-- Hidden Input for Room Name -->
+            <input type="hidden" id="room-name">
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Thời gian đếm ngược (giây)</label>
+              <input type="number" id="capture-interval" value="10" min="3" max="60"
+                class="w-full bg-slate-950/80 border border-slate-800 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 rounded-xl px-4 py-3 text-sm text-slate-250 outline-none transition duration-200">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Tỉ Lệ Khung Hình</label>
+              <select id="aspect-ratio"
+                class="w-full bg-slate-950/80 border border-slate-800 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 rounded-xl px-4 py-3 text-sm text-slate-250 outline-none transition duration-200 cursor-pointer">
+                <option value="3:2">3:2 (Ngang - Mặc định)</option>
+                <option value="2:3">2:3 (Dọc)</option>
+                <option value="4:3">4:3 (Ngang)</option>
+                <option value="3:4">3:4 (Dọc)</option>
+                <option value="16:9">16:9 (Siêu Rộng)</option>
+                <option value="9:16">9:16 (Siêu Dọc)</option>
+                <option value="1:1">1:1 (Vuông)</option>
+              </select>
+            </div>
+
+            <!-- Camera Device Select -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Thiết Bị Camera</label>
+              <select id="camera-select"
+                class="w-full bg-slate-950/80 border border-slate-800 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 rounded-xl px-4 py-3 text-sm text-slate-250 outline-none transition duration-200 cursor-pointer">
+                <option value="">-- Mặc định (Tự động kết nối) --</option>
+              </select>
+              <p class="text-[10px] text-slate-500 mt-1">Chọn thiết bị camera đang kết nối để gán cho phòng này.</p>
+            </div>
+
+            <!-- Layers Management UI -->
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Danh Sách Layers</label>
+                <button type="button" onclick="document.getElementById('layer-file-input').click()"
+                  class="text-xs bg-slate-800 hover:bg-slate-700 text-rose-450 font-semibold px-3 py-1.5 rounded-lg border border-slate-700/60 transition flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path>
+                  </svg>
+                  Thêm Layer
+                </button>
+              </div>
+
+              <input type="file" id="layer-file-input" accept="image/*,video/*" class="hidden">
+
+              <div id="layer-uploading-indicator" class="hidden text-center py-4 bg-slate-950/60 border border-slate-800 rounded-xl text-xs text-slate-400">
+                Đang tải lên file layer...
+              </div>
+
+              <div id="layers-list-container" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
+              <p class="text-[10px] text-slate-500 mt-1">Kéo thả các layer để sắp xếp thứ tự đè.</p>
+            </div>
+
+            <button type="submit"
+              class="w-full py-3 bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white font-semibold rounded-xl transition duration-200 shadow-lg shadow-rose-500/25 flex justify-center items-center gap-2">
+              Lưu Thiết Lập Phòng
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Right Column: Demo Preview & Quick Actions -->
+      <section class="lg:col-span-2 space-y-6">
+        <div class="bg-slate-900/50 border border-slate-850 rounded-2xl p-6 backdrop-blur-xl shadow-xl flex flex-col gap-6">
+          
+          <!-- Title & Back Button -->
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div>
+              <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Đang quản lý</span>
+              <h2 id="current-room-name-title" class="text-xl font-black text-rose-500 uppercase tracking-wide">ROOM-NAME</h2>
+            </div>
+            <button id="back-btn" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-4 py-2 rounded-xl border border-slate-700 transition flex items-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"></path>
+              </svg>
+              Quay lại
+            </button>
+          </div>
+
+          <!-- Demo Preview aspect container -->
+          <div class="space-y-2">
+            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Màn Hình Demo Thiết Lập</label>
+            <div class="flex justify-center items-center bg-slate-950/20 border border-slate-800/80 rounded-2xl p-4 w-full h-[400px]">
+              <div id="demo-preview-box" class="relative bg-slate-950 border border-slate-850 rounded-xl overflow-hidden shadow-2xl transition-all duration-300 max-w-full max-h-full" style="aspect-ratio: 3/2; height: 100%;">
+                <div class="absolute inset-0 bg-slate-900/40 flex flex-col items-center justify-center text-slate-500 text-[10px] select-none pointer-events-none z-0">
+                  <svg class="w-12 h-12 text-slate-600 mb-1" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.828-1.336a2.31 2.31 0 00-1.64-1.055 48.111 48.111 0 00-3.41 0 2.31 2.31 0 00-1.64 1.055l-.828 1.336z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  </svg>
+                  <span>[ Khung Ảnh Camera Demo ]</span>
+                </div>
+                <div id="demo-layers-container" class="absolute inset-0 pointer-events-none z-10"></div>
+              </div>
+            </div>
+            <p class="text-[10px] text-slate-500">Xem trước tỷ lệ màn hình và thứ tự các layers đè lên nhau.</p>
+          </div>
+
+          <!-- Quick Actions & Shutter Testing -->
+          <div class="border-t border-slate-800 pt-6 space-y-4">
+            <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Hành Động & Kiểm Thử</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Viewer Links -->
+              <div class="bg-slate-950/40 border border-slate-800 p-4 rounded-xl space-y-2.5">
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Liên kết trang</span>
+                <div class="grid grid-cols-2 gap-2">
+                  <a id="link-liveview" href="#" target="_blank" class="text-center py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold transition border border-slate-750 flex items-center justify-center gap-1.5">
+                    Mở Liveview
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"></path>
+                    </svg>
+                  </a>
+                  <a id="link-album" href="#" target="_blank" class="text-center py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold transition border border-slate-750 flex items-center justify-center gap-1.5">
+                    Mở Album
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"></path>
+                    </svg>
+                  </a>
+                </div>
+              </div>
+
+              <!-- Remote Shutter -->
+              <div class="bg-slate-950/40 border border-slate-800 p-4 rounded-xl space-y-2.5">
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Kích hoạt chụp thử từ xa</span>
+                <div class="grid grid-cols-2 gap-2">
+                  <button id="btn-trigger-photo" type="button" class="py-2.5 bg-rose-500 hover:bg-rose-600 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm shadow-rose-500/10">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.828-1.336a2.31 2.31 0 00-1.64-1.055 48.111 48.111 0 00-3.41 0 2.31 2.31 0 00-1.64 1.055l-.828 1.336z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    Chụp Ảnh
+                  </button>
+                  <button id="btn-trigger-video" type="button" class="py-2.5 bg-violet-600 hover:bg-violet-750 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm shadow-violet-500/10">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"></path>
+                    </svg>
+                    Quay Video
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="pt-2">
+              <button id="btn-delete-room" type="button" class="w-full py-3 bg-rose-950/20 hover:bg-rose-950/40 text-rose-450 border border-rose-500/10 hover:border-rose-500/35 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+                Xóa Phòng Chụp Này
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- Interactive Layer Adjustment Modal -->
+  <div id="layer-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md hidden p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] text-slate-100">
+      <!-- Header -->
+      <div class="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/60">
+        <div>
+          <h3 id="modal-layer-title" class="font-bold text-slate-200 text-lg">Điều chỉnh Layer: <span class="text-rose-450 font-semibold" id="modal-layer-name">Layer Name</span></h3>
+          <p class="text-[11px] text-slate-400 mt-0.5">Nhấn chuột trái kéo để di chuyển vị trí, kéo tay nắm ở góc dưới-phải để thay đổi kích thước.</p>
+        </div>
+        <button id="modal-close-btn" class="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Content Area -->
+      <div class="flex-1 overflow-y-auto p-6 flex flex-col lg:flex-row gap-6 min-h-0">
+        <!-- Interactive Preview Box -->
+        <div id="modal-preview-parent" class="flex-1 flex flex-col justify-center items-center bg-slate-950/20 border border-slate-800 rounded-xl p-4 min-h-[300px] lg:min-h-0 w-full h-full overflow-hidden">
+          <div id="modal-aspect-container" class="relative bg-slate-950 border border-slate-850 rounded-xl overflow-hidden shadow-2xl select-none w-full max-w-md" style="aspect-ratio: 3/2;">
+            <!-- Placeholder Camera background (same as preview-box) -->
+            <div class="absolute inset-0 bg-slate-900/20 flex flex-col items-center justify-center text-slate-600 text-[10px] select-none pointer-events-none z-0">
+              <svg class="w-12 h-12 text-slate-700 mb-1" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.828-1.336a2.31 2.31 0 00-1.64-1.055 48.111 48.111 0 00-3.41 0 2.31 2.31 0 00-1.64 1.055l-.828 1.336z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              <span>[ Khung Ảnh Camera Demo ]</span>
+            </div>
+
+            <!-- Background layers stack (all other layers rendered statically as context) -->
+            <div id="modal-background-layers" class="absolute inset-0 pointer-events-none z-10"></div>
+
+            <!-- Active Layer overlay wrapper that can be moved/resized -->
+            <div id="modal-active-layer-wrapper" class="absolute cursor-move bg-rose-500/5 select-none z-20" style="left: 0%; top: 0%; width: 100%; height: 100%;">
+              <!-- Image or video inside wrapper -->
+              <div id="modal-active-content-box" class="w-full h-full relative">
+                <img id="modal-active-img" class="w-full h-full object-contain pointer-events-none hidden">
+                <video id="modal-active-video" class="w-full h-full object-contain pointer-events-none hidden" autoplay loop muted playsinline></video>
+              </div>
+
+              <!-- Resize handle -->
+              <!-- Bottom Right handle -->
+              <div id="handle-br" class="absolute bottom-0 right-0 w-5 h-5 bg-rose-500 border-2 border-slate-900 rounded-full cursor-se-resize translate-x-1/2 translate-y-1/2 z-30 flex items-center justify-center hover:scale-125 transition-transform duration-100 shadow-lg">
+                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 5.25l-7.5 7.5-7.5-7.5M19.5 18.75l-7.5-7.5-7.5 7.5"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controls Sidebar -->
+        <div class="w-full lg:w-72 bg-slate-950/60 border border-slate-800 rounded-xl p-5 flex flex-col justify-between gap-6">
+          <div class="space-y-5">
+            <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Thông Số Thiết Lập</h4>
+            
+            <div class="grid grid-cols-2 gap-4">
+              <div class="bg-slate-900 border border-slate-800/80 px-3.5 py-2.5 rounded-xl">
+                <span class="text-[9px] text-slate-500 block uppercase font-bold tracking-wider">Tọa độ X</span>
+                <span id="stat-x" class="text-sm font-black text-slate-200">0%</span>
+              </div>
+              <div class="bg-slate-900 border border-slate-800/80 px-3.5 py-2.5 rounded-xl">
+                <span class="text-[9px] text-slate-500 block uppercase font-bold tracking-wider">Tọa độ Y</span>
+                <span id="stat-y" class="text-sm font-black text-slate-200">0%</span>
+              </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800/80 px-3.5 py-2.5 rounded-xl">
+              <span class="text-[9px] text-slate-500 block uppercase font-bold tracking-wider">Kích Thước (Size)</span>
+              <span id="stat-scale" class="text-sm font-black text-rose-450">100%</span>
+            </div>
+
+            <!-- Fine-tuning Sliders -->
+            <div class="space-y-4 pt-2">
+              <span class="text-[10px] text-slate-400 block uppercase font-bold tracking-wider">Tinh Chỉnh Bằng Slider</span>
+              
+              <div>
+                <div class="flex justify-between text-[11px] text-slate-400 mb-1">
+                  <span>Trục X (Ngang)</span>
+                  <span id="slider-x-val" class="font-semibold text-slate-300">0%</span>
+                </div>
+                <input type="range" id="modal-slider-x" min="-100" max="100" value="0" class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-rose-500">
+              </div>
+
+              <div>
+                <div class="flex justify-between text-[11px] text-slate-400 mb-1">
+                  <span>Trục Y (Dọc)</span>
+                  <span id="slider-y-val" class="font-semibold text-slate-300">0%</span>
+                </div>
+                <input type="range" id="modal-slider-y" min="-100" max="100" value="0" class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-rose-500">
+              </div>
+
+              <div>
+                <div class="flex justify-between text-[11px] text-slate-400 mb-1">
+                  <span>Kích thước (Scale)</span>
+                  <span id="slider-scale-val" class="font-semibold text-rose-400">100%</span>
+                </div>
+                <input type="range" id="modal-slider-scale" min="5" max="300" value="100" class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-rose-500">
+              </div>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-2 pt-4 border-t border-slate-850">
+            <button id="modal-reset-btn" type="button" class="py-3 bg-slate-800 hover:bg-slate-700/80 text-xs font-semibold text-slate-300 rounded-xl transition border border-slate-700/60">
+              Khôi Phục Mặc Định
+            </button>
+            <button id="modal-save-btn" type="button" class="py-3 bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-xs font-bold text-white rounded-xl transition shadow-lg shadow-rose-500/25">
+              Lưu Thiết Lập
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="w-full text-center text-xs text-slate-500 py-8 border-t border-slate-900 mt-12 max-w-6xl mx-auto">
+    2026 PhotoBooth Sync System. Bảng điều khiển admin.
+  </footer>
+
+  <script>
+    const form = document.getElementById('room-form');
+    const nameInput = document.getElementById('room-name');
+    const intervalInput = document.getElementById('capture-interval');
+    const ratioInput = document.getElementById('aspect-ratio');
+    const layerFileInput = document.getElementById('layer-file-input');
+    const layerIndicator = document.getElementById('layer-uploading-indicator');
+    const layersListContainer = document.getElementById('layers-list-container');
+
+    const searchPanel = document.getElementById('search-panel');
+    const editorPanel = document.getElementById('editor-panel');
+    const roomSearchInput = document.getElementById('admin-room-search');
+    const searchBtn = document.getElementById('search-btn');
+    const currentRoomNameTitle = document.getElementById('current-room-name-title');
+    const roomStatusBadge = document.getElementById('room-status-badge');
+    const newRoomAlert = document.getElementById('new-room-alert');
+    const backBtn = document.getElementById('back-btn');
+    const linkLiveview = document.getElementById('link-liveview');
+    const linkAlbum = document.getElementById('link-album');
+    const btnTriggerPhoto = document.getElementById('btn-trigger-photo');
+    const btnTriggerVideo = document.getElementById('btn-trigger-video');
+    const btnDeleteRoom = document.getElementById('btn-delete-room');
+
+    let layersState = [];
+    let dragSourceIndex = null;
+    let currentRoomName = '';
+    let isNewRoom = false;
+    let roomOnlineStatus = false;
+    let activeViewersCount = 0;
+    let isVideoRecording = false;
+
+    ratioInput.addEventListener('change', function() {
+      var ratio = ratioInput.value || '3:2';
+      document.getElementById('demo-preview-box').style.aspectRatio = ratio.replace(':', ' / ');
+    });
+
+    layerFileInput.addEventListener('change', async function(e) {
+      if (layerFileInput.files.length === 0) return;
+      var file = layerFileInput.files[0];
+      layerIndicator.classList.remove('hidden');
+      var formData = new FormData();
+      formData.append('layer', file);
+      try {
+        var response = await fetch('/api/upload-layer', { method: 'POST', body: formData });
+        if (response.ok) {
+          var data = await response.json();
+          if (data.success) {
+            var newIndex = layersState.length;
+            layersState.push({
+              id: 'layer-' + Date.now() + '-' + Math.round(Math.random() * 1000),
+              type: data.type, url: data.url, name: data.name,
+              x: 0, y: 0, scale: 100
+            });
+            renderLayersList();
+            // Automatically open modal for position/size setup
+            openModal(newIndex);
+          } else { alert('Upload layer that bai.'); }
+        } else { alert('Khong the upload layer.'); }
+      } catch (err) { console.error(err); alert('Loi ket noi.'); }
+      finally { layerIndicator.classList.add('hidden'); layerFileInput.value = ''; }
+    });
+
+    function updateLayerProp(index, prop, value) {
+      if (layersState[index]) {
+        layersState[index][prop] = parseFloat(value);
+        var labelEl = document.getElementById('layer-' + index + '-' + prop + '-val');
+        if (labelEl) labelEl.textContent = value + '%';
+        var previewEl = document.getElementById('demo-layer-el-' + index);
+        if (previewEl) {
+          if (prop === 'x') previewEl.style.left = value + '%';
+          if (prop === 'y') previewEl.style.top = value + '%';
+          if (prop === 'scale') { previewEl.style.width = value + '%'; previewEl.style.height = value + '%'; }
+        }
+      }
+    }
+
+    function renderLayersList() {
+      layersListContainer.innerHTML = '';
+      var demoContainer = document.getElementById('demo-layers-container');
+      demoContainer.innerHTML = '';
+
+      if (layersState.length === 0) {
+        layersListContainer.innerHTML = '<div class="text-center py-6 border border-dashed border-slate-800 rounded-xl text-xs text-slate-500">Chua co layer nao. Hay bam Them Layer.</div>';
+        return;
+      }
+
+      layersState.forEach(function(layer, index) {
+        if (layer.x === undefined) layer.x = 0;
+        if (layer.y === undefined) layer.y = 0;
+        if (layer.scale === undefined) layer.scale = 100;
+
+        var item = document.createElement('div');
+        item.className = 'bg-slate-950/80 border border-slate-800 hover:border-slate-700/80 rounded-xl p-3 transition duration-150 select-none';
+        item.setAttribute('draggable', 'true');
+        item.dataset.index = index;
+
+        var previewHtml = '';
+        if (layer.type === 'video') {
+          previewHtml = '<div class="w-10 h-10 bg-blue-950/40 border border-blue-900/40 rounded flex items-center justify-center text-blue-400 flex-shrink-0 cursor-pointer" onclick="openModal(' + index + ')"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg></div>';
+        } else {
+          previewHtml = '<div class="w-10 h-10 rounded border border-slate-800 overflow-hidden bg-slate-900 flex-shrink-0 cursor-pointer" onclick="openModal(' + index + ')"><img src="' + layer.url + '" class="w-full h-full object-cover"></div>';
+        }
+
+        var typeBadge = layer.type === 'video'
+          ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase">Video</span>'
+          : '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase">Anh</span>';
+
+        item.innerHTML = '<div class="flex items-center justify-between cursor-grab active:cursor-grabbing">'
+          + '<div class="flex items-center gap-3 min-w-0">'
+          + '<div class="text-slate-650 hover:text-slate-450"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"></path></svg></div>'
+          + previewHtml
+          + '<div class="min-w-0 cursor-pointer" onclick="openModal(' + index + ')"><div class="text-xs font-semibold text-slate-300 truncate hover:text-rose-450 transition duration-100 max-w-[120px]" title="' + layer.name + '">' + layer.name + '</div>'
+          + '<div class="flex items-center gap-1.5 mt-0.5">' + typeBadge + '</div></div></div>'
+          + '<div class="flex items-center gap-1">'
+          + '<button type="button" onclick="openModal(' + index + ')" class="p-1.5 text-violet-400 hover:bg-violet-950/30 rounded-lg transition" title="Điều chỉnh vị trí & kích thước">'
+          + '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>'
+          + '</button>'
+          + '<button type="button" onclick="deleteLayer(' + index + ')" class="p-1.5 text-rose-500 hover:bg-rose-950/30 rounded-lg transition" title="Xóa layer">'
+          + '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>'
+          + '</button></div>'
+          + '</div>';
+
+        item.addEventListener('dragstart', handleDragStart);
+        item.addEventListener('dragover', handleDragOver);
+        item.addEventListener('drop', handleDrop);
+        item.addEventListener('dragend', handleDragEnd);
+        layersListContainer.appendChild(item);
+
+        // Demo preview element
+        var demoEl;
+        if (layer.type === 'video') {
+          demoEl = document.createElement('video');
+          demoEl.src = layer.url; demoEl.autoplay = true; demoEl.loop = true; demoEl.muted = true;
+          demoEl.setAttribute('playsinline', 'true');
+        } else {
+          demoEl = document.createElement('img');
+          demoEl.src = layer.url;
+        }
+        demoEl.id = 'demo-layer-el-' + index;
+        demoEl.className = 'absolute object-contain pointer-events-none';
+        demoEl.style.left = layer.x + '%';
+        demoEl.style.top = layer.y + '%';
+        demoEl.style.width = layer.scale + '%';
+        demoEl.style.height = layer.scale + '%';
+        demoEl.style.zIndex = layersState.length - index;
+        demoContainer.appendChild(demoEl);
+      });
+    }
+
+    function handleDragStart(e) {
+      dragSourceIndex = this.dataset.index;
+      this.classList.add('opacity-40');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', dragSourceIndex);
+    }
+    function handleDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; return false; }
+    function handleDrop(e) {
+      e.preventDefault();
+      var targetIndex = this.dataset.index;
+      var sourceIndex = e.dataTransfer.getData('text/plain');
+      if (sourceIndex !== targetIndex) {
+        var movedItem = layersState.splice(sourceIndex, 1)[0];
+        layersState.splice(targetIndex, 0, movedItem);
+        renderLayersList();
+      }
+    }
+    function handleDragEnd() { this.classList.remove('opacity-40'); }
+    function deleteLayer(index) { layersState.splice(index, 1); renderLayersList(); }
+
+    async function triggerRemoteCapture(roomName, mode) {
+      try {
+        var response = await fetch('/api/rooms/' + roomName + '/trigger', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: mode })
+        });
+        if (!response.ok) {
+          alert('Không thể kích hoạt chụp từ xa.');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Lỗi kết nối máy chủ.');
+      }
+    }
+
+    async function accessRoom(roomName) {
+      if (!roomName) return;
+      currentRoomName = roomName.toLowerCase().trim();
+      
+      isVideoRecording = false;
+      btnTriggerVideo.innerHTML = `
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"></path>
+        </svg>
+        Quay Video
+      `;
+      
+      try {
+        var response = await fetch('/api/rooms-data/' + currentRoomName);
+        var room = null;
+        if (response.ok) {
+          room = await response.json();
+          isNewRoom = false;
+          newRoomAlert.classList.add('hidden');
+          
+          nameInput.value = room.name;
+          intervalInput.value = room.autoCaptureInterval || 10;
+          ratioInput.value = room.aspectRatio || '3:2';
+          document.getElementById('demo-preview-box').style.aspectRatio = (room.aspectRatio || '3:2').replace(':', ' / ');
+          layersState = room.layers || [];
+          renderLayersList();
+          
+          roomOnlineStatus = room.online;
+          activeViewersCount = room.activeViewers || 0;
+          updateRoomStatusUI(room.online, room.deviceId);
+        } else if (response.status === 404) {
+          isNewRoom = true;
+          newRoomAlert.classList.remove('hidden');
+          
+          nameInput.value = currentRoomName;
+          intervalInput.value = 10;
+          ratioInput.value = '3:2';
+          document.getElementById('demo-preview-box').style.aspectRatio = '3 / 2';
+          layersState = [];
+          renderLayersList();
+          
+          roomOnlineStatus = false;
+          activeViewersCount = 0;
+          updateRoomStatusUI(false, '');
+        } else {
+          alert('Lỗi tải dữ liệu phòng chụp.');
+          return;
+        }
+
+        currentRoomNameTitle.textContent = currentRoomName;
+        linkLiveview.href = '/room/' + currentRoomName;
+        linkAlbum.href = '/room/' + currentRoomName + '/download';
+        
+        searchPanel.classList.add('hidden');
+        editorPanel.classList.remove('hidden');
+        setTimeout(() => {
+          editorPanel.style.opacity = '1';
+          editorPanel.style.transform = 'translateY(0)';
+        }, 50);
+
+        await loadActiveDevices();
+        renderCameraSelect(room ? room.deviceId || '' : '');
+        
+      } catch (err) {
+        console.error(err);
+        alert('Lỗi kết nối máy chủ.');
+      }
+    }
+
+    function updateRoomStatusUI(online, deviceId) {
+      if (online) {
+        roomStatusBadge.className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+        roomStatusBadge.textContent = "Camera Online";
+        
+        btnTriggerPhoto.removeAttribute('disabled');
+        btnTriggerPhoto.className = "py-2.5 bg-rose-500 hover:bg-rose-600 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm shadow-rose-500/10";
+        btnTriggerVideo.removeAttribute('disabled');
+        if (!isVideoRecording) {
+          btnTriggerVideo.className = "py-2.5 bg-violet-600 hover:bg-violet-750 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm shadow-violet-500/10";
+        }
+      } else {
+        roomStatusBadge.className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider bg-rose-500/10 text-rose-450 border border-rose-500/20";
+        roomStatusBadge.textContent = "Camera Offline";
+        
+        var isCaptureEnabled = activeViewersCount > 0;
+        if (isCaptureEnabled) {
+          btnTriggerPhoto.removeAttribute('disabled');
+          btnTriggerPhoto.className = "py-2.5 bg-rose-500 hover:bg-rose-600 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm shadow-rose-500/10";
+          btnTriggerVideo.removeAttribute('disabled');
+          if (!isVideoRecording) {
+            btnTriggerVideo.className = "py-2.5 bg-violet-600 hover:bg-violet-750 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm shadow-violet-500/10";
+          }
+        } else {
+          btnTriggerPhoto.setAttribute('disabled', 'true');
+          btnTriggerPhoto.className = "py-2.5 bg-rose-500 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 opacity-50 cursor-not-allowed";
+          btnTriggerVideo.setAttribute('disabled', 'true');
+          btnTriggerVideo.className = "py-2.5 bg-violet-600 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 opacity-50 cursor-not-allowed";
+        }
+      }
+    }
+
+    searchBtn.addEventListener('click', function() {
+      accessRoom(roomSearchInput.value);
+    });
+
+    roomSearchInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        accessRoom(roomSearchInput.value);
+      }
+    });
+
+    backBtn.addEventListener('click', function() {
+      editorPanel.style.opacity = '0';
+      editorPanel.style.transform = 'translateY(4px)';
+      setTimeout(() => {
+        editorPanel.classList.add('hidden');
+        searchPanel.classList.remove('hidden');
+        roomSearchInput.value = '';
+        currentRoomName = '';
+        isVideoRecording = false;
+      }, 150);
+    });
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      var roomName = nameInput.value.trim().toLowerCase();
+      var interval = intervalInput.value;
+      var ratio = ratioInput.value;
+      var deviceId = document.getElementById('camera-select').value;
+      if (!roomName) return;
+
+      var bodyData = { roomName: roomName, autoCaptureInterval: interval, aspectRatio: ratio, deviceId: deviceId, layers: layersState };
+      try {
+        var response = await fetch('/api/rooms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(bodyData) });
+        if (response.ok) {
+          isNewRoom = false;
+          newRoomAlert.classList.add('hidden');
+          alert('Đã lưu thiết lập phòng chụp thành công!');
+          accessRoom(roomName);
+        } else { alert('Không thể tạo/cập nhật phòng!'); }
+      } catch (err) { alert('Lỗi kết nối!'); }
+    });
+
+    btnTriggerPhoto.addEventListener('click', function() {
+      if (currentRoomName) {
+        triggerRemoteCapture(currentRoomName, 'photo');
+      }
+    });
+    btnTriggerVideo.addEventListener('click', async function() {
+      if (!currentRoomName) return;
+      
+      if (!isVideoRecording) {
+        // Start recording
+        isVideoRecording = true;
+        btnTriggerVideo.innerHTML = `
+          <svg class="w-3.5 h-3.5 fill-current text-white animate-pulse" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <rect x="4" y="4" width="16" height="16" rx="2"/>
+          </svg>
+          Dừng Quay
+        `;
+        btnTriggerVideo.className = "py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm shadow-red-500/10";
+        
+        await triggerRemoteVideo(currentRoomName, 'start');
+      } else {
+        // Stop recording
+        isVideoRecording = false;
+        btnTriggerVideo.innerHTML = `
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"></path>
+          </svg>
+          Quay Video
+        `;
+        btnTriggerVideo.className = "py-2.5 bg-violet-600 hover:bg-violet-750 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm shadow-violet-500/10";
+        
+        await triggerRemoteVideo(currentRoomName, 'stop');
+      }
+    });
+
+    async function triggerRemoteVideo(roomName, action) {
+      try {
+        var response = await fetch('/api/rooms/' + roomName + '/trigger', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: 'video', action: action })
+        });
+        if (!response.ok) {
+          alert('Không thể gửi lệnh quay video.');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Lỗi kết nối máy chủ.');
+      }
+    }
+    btnDeleteRoom.addEventListener('click', async function() {
+      if (!currentRoomName) return;
+      if (!confirm('Bạn có chắc chắn muốn xóa phòng "' + currentRoomName + '"?')) return;
+      try {
+        var response = await fetch('/api/rooms/' + currentRoomName, { method: 'DELETE' });
+        if (response.ok) {
+          alert('Đã xóa phòng thành công!');
+          editorPanel.style.opacity = '0';
+          editorPanel.style.transform = 'translateY(4px)';
+          setTimeout(() => {
+            editorPanel.classList.add('hidden');
+            searchPanel.classList.remove('hidden');
+            roomSearchInput.value = '';
+            currentRoomName = '';
+          }, 150);
+        } else { alert('Không thể xóa phòng!'); }
+      } catch (err) { alert('Lỗi kết nối server!'); }
+    });
+
+    var activeDevicesList = [];
+
+    async function loadActiveDevices() {
+      try {
+        var response = await fetch('/api/active-devices');
+        if (!response.ok) throw new Error('API failed');
+        activeDevicesList = await response.json();
+        renderCameraSelect();
+      } catch (err) { console.error('Error loading active devices:', err); }
+    }
+
+    function renderCameraSelect(selectedDeviceId) {
+      selectedDeviceId = selectedDeviceId || '';
+      var cameraSelect = document.getElementById('camera-select');
+      var urlParams = new URLSearchParams(window.location.search);
+      var localDeviceId = urlParams.get('localDeviceId') || '';
+      
+      var currentVal = selectedDeviceId || cameraSelect.value || localDeviceId;
+      
+      cameraSelect.innerHTML = '<option value="">-- Mặc định (Tự động kết nối) --</option>';
+      activeDevicesList.forEach(function(dev) {
+        var option = document.createElement('option');
+        option.value = dev.deviceId;
+        
+        var suffix = dev.roomName ? 'Đang ở: ' + dev.roomName : 'Sẵn sàng';
+        var label = dev.deviceId;
+        if (localDeviceId && dev.deviceId === localDeviceId) {
+          label += ' (Máy tính này)';
+        }
+        
+        var ipStr = dev.ip ? ' [IP: ' + dev.ip + ']' : '';
+        option.textContent = label + ipStr + ' (' + suffix + ')';
+        cameraSelect.appendChild(option);
+      });
+      if (currentVal && !activeDevicesList.some(function(d) { return d.deviceId === currentVal; })) {
+        var option = document.createElement('option');
+        option.value = currentVal;
+        var label = currentVal;
+        if (localDeviceId && currentVal === localDeviceId) {
+          label += ' (Máy tính này)';
+        }
+        option.textContent = label + ' (Ngoại tuyến)';
+        cameraSelect.appendChild(option);
+      }
+      cameraSelect.value = currentVal;
+    }
+
+    loadActiveDevices();
+    renderLayersList();
+
+    // INTERACTIVE LAYER EDITOR POPUP SCRIPT
+    var activeEditingIndex = null;
+    var modalX = 0, modalY = 0, modalScale = 100;
+    var isDragging = false;
+    var isResizing = false;
+    var startDragX = 0, startDragY = 0;
+    var startXPercent = 0, startYPercent = 0, startScalePercent = 0;
+
+    const modalAspectContainer = document.getElementById('modal-aspect-container');
+    const modalActiveLayerWrapper = document.getElementById('modal-active-layer-wrapper');
+    const handleBR = document.getElementById('handle-br');
+
+    function resizeModalAspectContainer() {
+      var parent = document.getElementById('modal-preview-parent');
+      if (!parent || !modalAspectContainer) return;
+
+      var ratioStr = ratioInput.value || '3:2';
+      var parts = ratioStr.split(':');
+      var wRatio = parseFloat(parts[0]) || 3;
+      var hRatio = parseFloat(parts[1]) || 2;
+      var R = wRatio / hRatio;
+
+      var parentRect = parent.getBoundingClientRect();
+      var padding = 32; 
+      var maxW = parentRect.width - padding;
+      var maxH = parentRect.height - padding;
+
+      if (maxW <= 0 || maxH <= 0) return;
+
+      var width, height;
+      if (maxW / maxH > R) {
+        height = maxH;
+        width = maxH * R;
+      } else {
+        width = maxW;
+        height = maxW / R;
+      }
+
+      modalAspectContainer.style.width = Math.round(width) + 'px';
+      modalAspectContainer.style.height = Math.round(height) + 'px';
+    }
+
+    window.addEventListener('resize', function() {
+      if (activeEditingIndex !== null) {
+        resizeModalAspectContainer();
+      }
+    });
+
+    modalActiveLayerWrapper.addEventListener('mousedown', function(e) {
+      if (e.button !== 0) return; 
+      if (e.target === handleBR || handleBR.contains(e.target)) return; 
+      
+      e.preventDefault();
+      isDragging = true;
+      startDragX = e.clientX;
+      startDragY = e.clientY;
+      startXPercent = modalX;
+      startYPercent = modalY;
+      
+      document.addEventListener('mousemove', handleGlobalMouseMove);
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+    });
+
+    handleBR.addEventListener('mousedown', function(e) {
+      if (e.button !== 0) return;
+      
+      e.preventDefault();
+      e.stopPropagation();
+      isResizing = true;
+      startDragX = e.clientX;
+      startDragY = e.clientY;
+      startScalePercent = modalScale;
+      
+      document.addEventListener('mousemove', handleGlobalMouseMove);
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+    });
+
+    function handleGlobalMouseMove(e) {
+      if (!isDragging && !isResizing) return;
+      
+      const containerRect = modalAspectContainer.getBoundingClientRect();
+      const deltaX = e.clientX - startDragX;
+      const deltaY = e.clientY - startDragY;
+      
+      if (isDragging) {
+        const deltaXPercent = (deltaX / containerRect.width) * 100;
+        const deltaYPercent = (deltaY / containerRect.height) * 100;
+        
+        modalX = Math.round((startXPercent + deltaXPercent) * 10) / 10;
+        modalY = Math.round((startYPercent + deltaYPercent) * 10) / 10;
+        
+        modalX = Math.max(-100, Math.min(100, modalX));
+        modalY = Math.max(-100, Math.min(100, modalY));
+        
+        updateModalLayerCSS();
+        updateModalSliders();
+        updateModalStats();
+      }
+      
+      if (isResizing) {
+        const deltaScale = (deltaX / containerRect.width) * 100;
+        
+        modalScale = Math.round((startScalePercent + deltaScale) * 10) / 10;
+        modalScale = Math.max(5, Math.min(300, modalScale));
+        
+        updateModalLayerCSS();
+        updateModalSliders();
+        updateModalStats();
+      }
+    }
+
+    function handleGlobalMouseUp() {
+      isDragging = false;
+      isResizing = false;
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+    }
+
+    document.getElementById('modal-slider-x').addEventListener('input', function() {
+      modalX = parseFloat(this.value);
+      updateModalLayerCSS();
+      updateModalStats();
+      document.getElementById('slider-x-val').textContent = modalX + '%';
+    });
+
+    document.getElementById('modal-slider-y').addEventListener('input', function() {
+      modalY = parseFloat(this.value);
+      updateModalLayerCSS();
+      updateModalStats();
+      document.getElementById('slider-y-val').textContent = modalY + '%';
+    });
+
+    document.getElementById('modal-slider-scale').addEventListener('input', function() {
+      modalScale = parseFloat(this.value);
+      updateModalLayerCSS();
+      updateModalStats();
+      document.getElementById('slider-scale-val').textContent = modalScale + '%';
+    });
+
+    function updateModalLayerCSS() {
+      modalActiveLayerWrapper.style.left = modalX + '%';
+      modalActiveLayerWrapper.style.top = modalY + '%';
+      modalActiveLayerWrapper.style.width = modalScale + '%';
+      modalActiveLayerWrapper.style.height = modalScale + '%';
+    }
+
+    function updateModalSliders() {
+      document.getElementById('modal-slider-x').value = modalX;
+      document.getElementById('modal-slider-y').value = modalY;
+      document.getElementById('modal-slider-scale').value = modalScale;
+      
+      document.getElementById('slider-x-val').textContent = modalX + '%';
+      document.getElementById('slider-y-val').textContent = modalY + '%';
+      document.getElementById('slider-scale-val').textContent = modalScale + '%';
+    }
+
+    function updateModalStats() {
+      document.getElementById('stat-x').textContent = modalX + '%';
+      document.getElementById('stat-y').textContent = modalY + '%';
+      document.getElementById('stat-scale').textContent = modalScale + '%';
+    }
+
+    function openModal(index) {
+      activeEditingIndex = index;
+      var layer = layersState[index];
+      if (!layer) return;
+
+      document.getElementById('modal-layer-name').textContent = layer.name;
+      
+      modalX = layer.x !== undefined ? parseFloat(layer.x) : 0;
+      modalY = layer.y !== undefined ? parseFloat(layer.y) : 0;
+      modalScale = layer.scale !== undefined ? parseFloat(layer.scale) : 100;
+      
+      modalAspectContainer.style.width = "";
+      modalAspectContainer.style.height = "";
+      var ratio = ratioInput.value || '3:2';
+      modalAspectContainer.style.aspectRatio = ratio.replace(':', ' / ');
+      
+      var img = document.getElementById('modal-active-img');
+      var video = document.getElementById('modal-active-video');
+      
+      if (layer.type === 'video') {
+        video.src = layer.url;
+        video.classList.remove('hidden');
+        img.classList.add('hidden');
+      } else {
+        img.src = layer.url;
+        img.classList.remove('hidden');
+        video.classList.add('hidden');
+      }
+
+      var bgContainer = document.getElementById('modal-background-layers');
+      bgContainer.innerHTML = '';
+      
+      layersState.forEach(function(otherLayer, otherIndex) {
+        if (otherIndex === index) return;
+
+        var element;
+        if (otherLayer.type === 'video') {
+          element = document.createElement('video');
+          element.src = otherLayer.url;
+          element.autoplay = true;
+          element.loop = true;
+          element.muted = true;
+          element.setAttribute('playsinline', 'true');
+        } else {
+          element = document.createElement('img');
+          element.src = otherLayer.url;
+        }
+
+        var ox = otherLayer.x !== undefined ? otherLayer.x : 0;
+        var oy = otherLayer.y !== undefined ? otherLayer.y : 0;
+        var oscale = otherLayer.scale !== undefined ? otherLayer.scale : 100;
+
+        element.className = 'absolute object-contain pointer-events-none opacity-30';
+        element.style.left = ox + '%';
+        element.style.top = oy + '%';
+        element.style.width = oscale + '%';
+        element.style.height = oscale + '%';
+        element.style.zIndex = layersState.length - otherIndex;
+        bgContainer.appendChild(element);
+      });
+
+      updateModalLayerCSS();
+      updateModalSliders();
+      updateModalStats();
+
+      document.getElementById('layer-modal').classList.remove('hidden');
+      setTimeout(resizeModalAspectContainer, 50);
+    }
+
+    function closeModal() {
+      document.getElementById('layer-modal').classList.add('hidden');
+      document.getElementById('modal-active-video').src = '';
+      document.getElementById('modal-background-layers').innerHTML = '';
+      activeEditingIndex = null;
+    }
+
+    document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+    
+    document.getElementById('modal-save-btn').addEventListener('click', function() {
+      if (activeEditingIndex !== null && layersState[activeEditingIndex]) {
+        layersState[activeEditingIndex].x = modalX;
+        layersState[activeEditingIndex].y = modalY;
+        layersState[activeEditingIndex].scale = modalScale;
+        renderLayersList();
+      }
+      closeModal();
+    });
+
+    document.getElementById('modal-reset-btn').addEventListener('click', function() {
+      modalX = 0;
+      modalY = 0;
+      modalScale = 100;
+      updateModalLayerCSS();
+      updateModalSliders();
+      updateModalStats();
+    });
+
+    // Dynamic update interval for the currently active room status
+    setInterval(async function() {
+      await loadActiveDevices();
+      if (currentRoomName && !isNewRoom) {
+        try {
+          var response = await fetch('/api/rooms-data/' + currentRoomName);
+          if (response.ok) {
+            var room = await response.json();
+            roomOnlineStatus = room.online;
+            activeViewersCount = room.activeViewers || 0;
+            updateRoomStatusUI(room.online, room.deviceId);
+          }
+        } catch (e) {
+          console.error('Error during status auto-refresh:', e);
+        }
+      }
+    }, 5000);
+</script>
+</body>
+</html>

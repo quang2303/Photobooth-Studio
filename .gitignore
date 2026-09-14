@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build outputs & executables
+dist/
+App client/dist/
+App server/public/uploads/
+*.exe
+!App client/bridges/canon/CanonBridge.exe
+!App client/bridges/canon/test_capture_session.exe
+
+# Environment variables & secrets
+.env
+App server/.env
+App client/.env
+credentials/
+*.pem
+
+# Logs & temp files
+*.log
+App client/bridges/canon/CanonBridge.log
+gphoto_debug.txt
+tmpfileGO11J1
+tmp/
+App client/tmp/
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

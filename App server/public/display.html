@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photo Booth - Màn Hình Trình Chiếu Live</title>
+  
+  <!-- Google Fonts & Font Awesome Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- CDN QRCode.js for client-side rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  
+  <style>
+    :root {
+      --background-radial: radial-gradient(circle at top, #1e1b4b 0%, #0f172a 65%, #020617 100%);
+      --glass-bg: rgba(15, 23, 42, 0.45);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --accent-gradient: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+      --accent-glow: rgba(244, 63, 94, 0.3);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--background-radial);
+      min-height: 100vh;
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Top Bar Header */
+    header {
+      width: 100%;
+      padding: 20px 40px;
+      background: rgba(15, 23, 42, 0.3);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--glass-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--accent-gradient);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+
+    .brand-icon i {
+      font-size: 20px;
+      color: white;
+    }
+
+    .brand-info h1 {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(to right, #ffffff, #cbd5e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-info p {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    .room-badge {
+      background: rgba(244, 63, 94, 0.1);
+      border: 1px solid rgba(244, 63, 94, 0.2);
+      color: #f43f5e;
+      padding: 6px 14px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      box-shadow: 0 0 10px rgba(244, 63, 94, 0.05);
+    }
+
+    /* Main Display Container */
+    .display-container {
+      flex: 1;
+      display: flex;
+      flex-direction: row;
+      gap: 40px;
+      padding: 30px 40px;
+      max-height: calc(100vh - 81px);
+      min-height: 0;
+    }
+
+    /* Left Panel: Photo Showcase */
+    .showcase-panel {
+      flex: 1.6;
+      background: rgba(2, 6, 23, 0.4);
+      border: 1px solid var(--glass-border);
+      border-radius: 28px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+      min-width: 0; /* flex child width handling */
+    }
+
+    .media-wrapper {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      transition: opacity 0.5s cubic-bezier(0.25, 1, 0.5, 1), transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    .media-wrapper.fade-out {
+      opacity: 0;
+      transform: scale(0.97);
+    }
+
+    .showcase-media {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 16px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Right Panel: QR & Info */
+    .info-panel {
+      flex: 0.9;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 30px;
+      max-width: 420px;
+    }
+
+    .qr-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 28px;
+      padding: 40px 30px;
+      width: 100%;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 24px;
+    }
+
+    .qr-title-box h3 {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+      color: #ffffff;
+    }
+
+    .qr-title-box p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .qr-glow-wrapper {
+      position: relative;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .qr-box {
+      background: white;
+      padding: 16px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    }
+
+    #qr-canvas {
+      width: 200px !important;
+      height: 200px !important;
+      display: block;
+    }
+
+    .qr-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 8px 16px;
+      border-radius: 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .qr-badge i {
+      color: #f43f5e;
+      animation: heartbeat 1.5s infinite;
+    }
+
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+
+    /* Empty/Placeholder State */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      text-align: center;
+      padding: 40px;
+    }
+
+    .empty-icon-pulse {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: rgba(244, 63, 94, 0.05);
+      border: 1px solid rgba(244, 63, 94, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(244, 63, 94, 0.4);
+      font-size: 36px;
+      box-shadow: 0 0 30px rgba(244, 63, 94, 0.05);
+      animation: pulse-ring 2.5s infinite ease-in-out;
+    }
+
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.2); }
+      70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(244, 63, 94, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+    }
+
+    .empty-state h3 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .empty-state p {
+      font-size: 13px;
+      color: var(--text-muted);
+      max-width: 300px;
+      line-height: 1.6;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .display-container {
+        flex-direction: column;
+        overflow-y: auto;
+        max-height: none;
+        padding: 20px;
+      }
+      .showcase-panel {
+        min-height: 400px;
+        aspect-ratio: 3/2;
+      }
+      .info-panel {
+        max-width: none;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header>
+    <div class="brand-section">
+      <div class="brand-icon">
+        <i class="fa-solid fa-expand"></i>
+      </div>
+      <div class="brand-info">
+        <h1>Màn Hình Trình Chiếu Live</h1>
+        <p>Tự động cập nhật hình ảnh & QR code</p>
+      </div>
+    </div>
+    <div id="room-badge-container">
+      <span class="room-badge" id="room-name-ui">...</span>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="display-container">
+    
+    <!-- Left Showcase Frame -->
+    <div class="showcase-panel">
+      <!-- Media content placeholder -->
+      <div id="media-container" class="media-wrapper">
+        <div class="empty-state" id="empty-state">
+          <div class="empty-icon-pulse">
+            <i class="fa-solid fa-camera"></i>
+          </div>
+          <h3>Đang Đợi Bức Ảnh Đầu Tiên</h3>
+          <p>Màn hình sẽ tự động cập nhật ngay khi bạn thực hiện chụp hình tại phòng chụp.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right QR Info Column -->
+    <div class="info-panel">
+      <div class="qr-card">
+        <div class="qr-title-box">
+          <h3>Tải Ảnh Của Bạn</h3>
+          <p>Quét mã QR bằng máy ảnh điện thoại hoặc Zalo để lưu ảnh chất lượng cao về máy.</p>
+        </div>
+        
+        <div class="qr-glow-wrapper">
+          <div class="qr-box">
+            <canvas id="qr-canvas"></canvas>
+          </div>
+        </div>
+        
+        <div class="qr-badge">
+          <i class="fa-solid fa-cloud-arrow-down"></i>
+          <span id="qr-status-text">Đang kết nối server...</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Socket.io Script & Logic -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // Extract room name from path (which is /room/:roomName/display)
+    const urlParts = window.location.pathname.split('/').filter(Boolean);
+    const roomIndex = urlParts.indexOf('room');
+    const roomName = roomIndex !== -1 && urlParts[roomIndex + 1] ? urlParts[roomIndex + 1] : null;
+
+    if (!roomName) {
+      alert('Đường dẫn không hợp lệ. Vui lòng quay lại trang chủ!');
+      window.location.href = '/index.html';
+    } else {
+      document.getElementById('room-name-ui').textContent = `PHÒNG: ${roomName.toUpperCase()}`;
+    }
+
+    const mediaContainer = document.getElementById('media-container');
+    const emptyState = document.getElementById('empty-state');
+    const qrCanvas = document.getElementById('qr-canvas');
+    const qrStatusText = document.getElementById('qr-status-text');
+
+    // Utility function to get landing page / download URL for QR code (legacy fallback)
+    function getQrCodeUrl(photoUrl) {
+      if (photoUrl.includes('/photo/raw/')) {
+        const photoId = photoUrl.split('/').pop();
+        return `${window.location.origin}/photo/${photoId}`;
+      }
+      return `${window.location.origin}${photoUrl}`;
+    }
+
+    // Get the Google Drive view link if available, otherwise fallback to local photo landing page
+    function getBestQrUrl(photo) {
+      if (photo.webViewLink && photo.webViewLink.trim() !== '') {
+        return photo.webViewLink;
+      }
+      if (photo.downloadLink && (photo.downloadLink.startsWith('http') || photo.downloadLink.includes('drive.google.com'))) {
+        return photo.downloadLink;
+      }
+      // Local fallback
+      const photoId = photo.photoId || (photo.url && photo.url.includes('/photo/raw/') ? photo.url.split('/').pop() : '');
+      if (photoId) {
+        return `${window.location.origin}/photo/${photoId}`;
+      }
+      return `${window.location.origin}${photo.url || photo.localPath || ''}`;
+    }
+
+    // Helper to generate the QR Code
+    function renderQrCode(targetUrl) {
+      QRCode.toCanvas(qrCanvas, targetUrl, {
+        width: 200,
+        margin: 1,
+        color: {
+          dark: '#0f172a',
+          light: '#ffffff'
+        }
+      }, (err) => {
+        if (err) {
+          console.error('Failed to generate QR Code:', err);
+          qrStatusText.textContent = 'Lỗi tạo mã QR';
+        } else {
+          qrStatusText.textContent = 'Quét mã để tải ảnh này';
+        }
+      });
+    }
+
+    // Main display update handler with smooth transition
+    function updateDisplay(mediaUrl, photoData = null) {
+      const isVideo = mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm');
+      
+      // Start transition fade-out
+      mediaContainer.classList.add('fade-out');
+      
+      setTimeout(() => {
+        // Clear container and inject media element
+        mediaContainer.innerHTML = '';
+        
+        let mediaEl;
+        if (isVideo) {
+          mediaEl = document.createElement('video');
+          mediaEl.src = mediaUrl;
+          mediaEl.className = 'showcase-media';
+          mediaEl.autoplay = true;
+          mediaEl.loop = true;
+          mediaEl.muted = true;
+          mediaEl.setAttribute('playsinline', 'true');
+        } else {
+          mediaEl = document.createElement('img');
+          mediaEl.src = mediaUrl;
+          mediaEl.className = 'showcase-media';
+          mediaEl.alt = 'Bức ảnh mới nhất';
+        }
+        
+        mediaContainer.appendChild(mediaEl);
+        
+        // Generate QR code pointing to download landing page or Google Drive Link
+        let targetQrUrl;
+        if (photoData) {
+          targetQrUrl = getBestQrUrl(photoData);
+        } else {
+          targetQrUrl = getQrCodeUrl(mediaUrl);
+        }
+        
+        console.log('Rendering QR Code for display with URL:', targetQrUrl);
+        renderQrCode(targetQrUrl);
+        
+        // End transition fade-in
+        mediaContainer.classList.remove('fade-out');
+      }, 500);
+    }
+
+    // Fallback: Clear display to empty state
+    function resetToEmptyState() {
+      mediaContainer.innerHTML = '';
+      mediaContainer.appendChild(emptyState);
+      
+      // Clear QR canvas (draw empty/grey placeholder qr or background)
+      const ctx = qrCanvas.getContext('2d');
+      ctx.clearRect(0, 0, qrCanvas.width, qrCanvas.height);
+      qrStatusText.textContent = 'Đang đợi bức ảnh tiếp theo...';
+    }
+
+    // Fetch photo metadata by photoId
+    async function getPhotoMetadata(photoId) {
+      try {
+        const response = await fetch(`/api/photo/metadata/${photoId}`);
+        if (response.ok) {
+          return await response.json();
+        }
+      } catch (err) {
+        console.error('Error fetching photo metadata:', err);
+      }
+      return null;
+    }
+
+    // Fetch details of the room on initialization to load the latest photo
+    async function initLatestPhoto() {
+      try {
+        const response = await fetch(`/api/rooms-data/${roomName}`);
+        if (!response.ok) throw new Error('Failed to fetch room data');
+        const room = await response.json();
+        
+        if (room.photos && room.photos.length > 0) {
+          const latestPhoto = room.photos[room.photos.length - 1];
+          const photoId = latestPhoto.split('/').pop();
+          
+          const metadata = await getPhotoMetadata(photoId);
+          if (metadata) {
+            updateDisplay(latestPhoto, metadata);
+          } else {
+            updateDisplay(latestPhoto, { url: latestPhoto, photoId: photoId });
+          }
+        } else {
+          resetToEmptyState();
+        }
+      } catch (err) {
+        console.error('Error initialization room details:', err);
+        resetToEmptyState();
+      }
+    }
+
+    // Initialize Socket.io Connection
+    const socket = io();
+
+    socket.on('connect', () => {
+      console.log('Connected to websocket server.');
+      socket.emit('join-room', roomName);
+      qrStatusText.textContent = 'Đã kết nối. Đang đợi chụp ảnh...';
+    });
+
+    socket.on('new-photo', (photo) => {
+      console.log('Received new photo event:', photo);
+      if (photo && photo.url) {
+        updateDisplay(photo.url, photo);
+      }
+    });
+
+    socket.on('disconnect', () => {
+      qrStatusText.textContent = 'Mất kết nối server...';
+    });
+
+    // Run initialization
+    initLatestPhoto();
+  </script>
+</body>
+</html>

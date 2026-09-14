@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photo Booth - Tải Ảnh Của Bạn</title>
+  <!-- Google Fonts & Font Awesome Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- CDN QRCode.js for client-side rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  
+  <style>
+    :root {
+      --background-radial: radial-gradient(circle at top, #1e1b4b 0%, #0f172a 60%, #020617 100%);
+      --glass-bg: rgba(15, 23, 42, 0.45);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --accent-gradient: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+      --accent-glow: rgba(244, 63, 94, 0.4);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--background-radial);
+      min-height: 100vh;
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    .main-container {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Glassmorphism Card style */
+    .card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 28px;
+      padding: 24px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(to right, #ffffff, #cbd5e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+
+    .header p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Image Preview Container */
+    .image-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 3/2;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      background-color: rgba(2, 6, 23, 0.5);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      margin-bottom: 24px;
+    }
+
+    .image-preview {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .image-preview.loaded {
+      opacity: 1;
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(2, 6, 23, 0.3);
+      transition: opacity 0.3s ease;
+    }
+
+    .spinner-icon {
+      width: 40px;
+      height: 40px;
+      border: 3.5px solid rgba(244, 63, 94, 0.15);
+      border-top-color: #f43f5e;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Action buttons & QR */
+    .action-section {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .download-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: var(--accent-gradient);
+      color: white;
+      text-decoration: none;
+      padding: 16px 24px;
+      border-radius: 18px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 10px 20px -5px var(--accent-glow);
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .download-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 25px -5px var(--accent-glow);
+    }
+
+    .download-btn:active {
+      transform: translateY(1px);
+    }
+
+    .qr-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 20px;
+      padding: 20px;
+      width: 100%;
+    }
+
+    .qr-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .qr-box {
+      background: white;
+      padding: 10px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    }
+
+    #qr-canvas {
+      width: 140px !important;
+      height: 140px !important;
+      display: block;
+    }
+
+    .footer-brand {
+      text-align: center;
+      font-size: 11px;
+      color: rgba(148, 163, 184, 0.4);
+      margin-top: 10px;
+    }
+
+    .footer-brand i {
+      color: #f43f5e;
+      margin: 0 2px;
+      animation: heartbeat 1.5s infinite;
+    }
+
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="main-container">
+    
+    <div class="card">
+      <div class="header">
+        <h1>Bức Ảnh Của Bạn Đã Sẵn Sàng</h1>
+        <p>Bấm nút bên dưới để tải về điện thoại</p>
+      </div>
+
+      <!-- Image Preview Section -->
+      <div class="image-container">
+        <div class="spinner" id="loading-spinner">
+          <div class="spinner-icon"></div>
+        </div>
+        <img id="preview-image" class="image-preview" alt="Bức ảnh của bạn">
+      </div>
+
+      <!-- Action Panel -->
+      <div class="action-section">
+        <a id="download-link" class="download-btn">
+          <i class="fa-solid fa-cloud-arrow-down"></i>
+          Tải Hình Về Máy
+        </a>
+
+        <!-- QR Code Sharing Panel -->
+        <div class="qr-container">
+          <span class="qr-title">Quét QR chia sẻ cho bạn bè</span>
+          <div class="qr-box">
+            <canvas id="qr-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-brand">
+      Made with <i class="fa-solid fa-heart"></i> by PhotoBooth System
+    </div>
+
+  </div>
+
+  <script>
+    // Extract photoId dynamically from current URL path (/photo/:photoId)
+    const urlParts = window.location.pathname.split('/').filter(Boolean);
+    const photoId = urlParts[urlParts.length - 1];
+
+    if (!photoId) {
+      alert('Đường dẫn không hợp lệ!');
+    } else {
+      const previewImg = document.getElementById('preview-image');
+      const downloadLink = document.getElementById('download-link');
+      const spinner = document.getElementById('loading-spinner');
+
+      // Set URL endpoints
+      const rawUrl = `/photo/raw/${photoId}`;
+      const downloadUrl = `/photo/download/${photoId}`;
+
+      // 1. Set download button href and filename trigger
+      downloadLink.href = downloadUrl;
+      downloadLink.setAttribute('download', `photobooth_${photoId}.jpg`);
+
+      // 2. Load preview image
+      previewImg.src = rawUrl;
+      previewImg.onload = () => {
+        spinner.style.opacity = '0';
+        setTimeout(() => {
+          spinner.style.display = 'none';
+          previewImg.classList.add('loaded');
+        }, 300);
+      };
+      
+      previewImg.onerror = () => {
+        spinner.style.display = 'none';
+        alert('Không tải được ảnh xem trước. Vui lòng kiểm tra lại!');
+      };
+
+      // 3. Render page URL as QR code (points to the landing page so others can scan and open it)
+      QRCode.toCanvas(document.getElementById('qr-canvas'), window.location.href, {
+        width: 140,
+        margin: 1,
+        color: {
+          dark: '#0f172a',
+          light: '#ffffff'
+        }
+      }, (err) => {
+        if (err) console.error('Failed to generate QR Code:', err);
+      });
+    }
+  </script>
+</body>
+</html>

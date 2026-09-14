@@ -1,0 +1,19 @@
+{
+  "licenseKey": "DEMO-LICENSE-12345",
+  "serverUrl": "http://localhost:3000",
+  "cameraSource": "webcam",
+  "frameOverlayPath": "",
+  "language": "vi",
+  "roomName": "default-room",
+  "webcamDeviceId": "",
+  "liveViewQuality": "high",
+  "enableServerSync": false,
+  "googleDriveRefreshToken": "",
+  "googleDriveUserEmail": "",
+  "googleDriveFolderId": "",
+  "storageMode": "local",
+  "kioskCountdown": 3,
+  "kioskAutoResetDelay": 15,
+  "localSavePath": "",
+  "simulationMode": false
+}

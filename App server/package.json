@@ -1,0 +1,21 @@
+{
+  "name": "photobooth-cloud-server",
+  "version": "1.0.0",
+  "description": "App Server for PhotoBooth with Room Support and WebSocket Sync",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "axios": "^1.18.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
+    "express": "^4.19.2",
+    "form-data": "^4.0.6",
+    "googleapis": "^173.0.0",
+    "mongoose": "^9.7.3",
+    "multer": "^1.4.5-lts.1",
+    "sharp": "^0.35.2",
+    "socket.io": "^4.7.5"
+  }
+}
